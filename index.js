@@ -2,13 +2,11 @@
  * Created by MEMEME on 2016/12/13.
  */
 window.onload=function (){
+    init();
     initBoard();
     food();
-    initSnake();
-    document.querySelector('#input1').onclick=function(){snakeMove('left')};
-    document.querySelector('#input2').onclick=function(){snakeMove('right')};
-    document.querySelector('#input3').onclick=function(){snakeMove('top')};
-    document.querySelector('#input4').onclick=function(){snakeMove('down')};
+    snakeUpDataView(snake);
+    start();
 };
 
 function initBoard(){
@@ -24,25 +22,25 @@ function initBoard(){
         }
     }
 }
-
-var snake = [[10,6],[10,5],[10,4],[10,3],[10,2]];
+var snake = null;
 var prevSnakeTail = [];
 var nowDirection = '';
 var timer = null;
 var foodx = 0;
 var foody = 0;
-function initSnake(){
-    snakeUpDataView(snake);
+function init(){
+    snake = [[10,6],[10,5],[10,4],[10,3],[10,2]];
+    foodx = 0;
+    foody = 0;
     nowDirection = 'right';
-    timer=setInterval(function(){snakeMove('right')},500);
+
 }
 function food(){
         foodx = Math.floor(Math.random() * 20);
         foody = Math.floor(Math.random() * 20);
     for( var i = 0; i < snake.length; i++){
         if(snake[i][0]==foodx && snake[i][1]==foody){
-            foodx = Math.floor(Math.random() * 20);
-            foody = Math.floor(Math.random() * 20);
+            food();
         }
     }
 }
@@ -57,43 +55,56 @@ function snakeUpDataView(snakeArr){
         snakeDom.style.background = '#ccc';
     }
 }
+function start(){
+    document.querySelector('#input1').addEventListener('click',function(){
+        timer = setInterval(function(){console.log(1);snakeMove('right');},200);
+    });
+}
 
 document.addEventListener('keydown',function(e){
     switch (e.keyCode){
         case 37:
             if(nowDirection=='top' || nowDirection == 'down') {
                 clearInterval(timer);
-                snakeMove('left');
-                timer = setInterval(function () {
-                    snakeMove('left')
-                }, 500);
+                if(snakeMove('left')) {
+                    timer = setInterval(function () {
+                        console.log('left');
+                        snakeMove('left')
+                    }, 200);
+                }
             }
             break;
         case 38:
             if(nowDirection=='left' || nowDirection == 'right') {
                 clearInterval(timer);
-                snakeMove('top');
-                timer = setInterval(function () {
-                    snakeMove('top')
-                }, 500);
+                if(snakeMove('top')) {
+                    timer = setInterval(function () {
+                        console.log('top');
+                        snakeMove('top')
+                    }, 200);
+                }
             }
             break;
         case 39:
             if(nowDirection=='top' || nowDirection == 'down') {
                 clearInterval(timer);
-                snakeMove('right');
-                timer = setInterval(function () {
-                    snakeMove('right')
-                }, 500);
+                if(snakeMove('right')) {
+                    timer = setInterval(function () {
+                        console.log('right');
+                        snakeMove('right')
+                    }, 200);
+                }
             }
             break;
         case 40:
             if(nowDirection=='left' || nowDirection == 'right') {
                 clearInterval(timer);
-                snakeMove('down');
-                timer = setInterval(function () {
-                    snakeMove('down')
-                }, 500);
+                if(snakeMove('down')){
+                    timer = setInterval(function () {
+                        console.log('down');
+                        snakeMove('down')
+                    }, 200);
+                }
             }
             break;
         case 32:
@@ -108,7 +119,7 @@ document.addEventListener('keydown',function(e){
 });
 
 function snakeMove(direction) {
-    prevSnakeTail=[snake[snake.length-1][0],snake[snake.length-1][1]]
+    prevSnakeTail=[snake[snake.length-1][0],snake[snake.length-1][1]];
     for (var i = snake.length - 1; i > 0; i--) {
         snake[i] = snake[i - 1];
     }
@@ -133,23 +144,11 @@ function snakeMove(direction) {
             nowDirection = 'down';
             break;
     }
-    console.log(snake);
-    console.log(prevSnakeTail);
-    eat();
-}
-function getOppositeDir(direction){
-    switch(direction){
-        case 'left':
-            return 'right';
-        case 'right':
-            return 'left';
-        case 'top':
-            return 'down';
-        case 'down':
-            return 'top';
-        default :
-            break;
+    if(notGameOver()) {
+        eat();
+        return true;
     }
+    return false;
 }
 function eat() {
     if(snake[0][0]==foodx && snake[0][1] == foody){
@@ -158,15 +157,25 @@ function eat() {
     }
     snakeUpDataView(snake);
 }
-
-
-
-
-
-
-
-
-
-
-
-
+function notGameOver(){
+    if(snake[0][0] < 0 || snake[0][0] > 19 || snake[0][1] < 0 || snake[0][1] > 19){
+        clearInterval(timer);
+        alert('GAMEOVER');
+        init();
+        food();
+        snakeUpDataView(snake);
+        return false;
+    }else{
+        for(var i = 4; i < snake.length; i++){
+            if(snake[0][0] == snake[i][0] && snake[0][1] == snake[i][1]){
+                clearInterval(timer);
+                alert('GAMEOVER');
+                init();
+                food();
+                snakeUpDataView(snake);
+                return false;
+            }
+        }
+    }
+    return true;
+}
