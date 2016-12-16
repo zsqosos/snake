@@ -3,14 +3,22 @@ body,div{
     margin: 0;
 }
 .container{
-    width: 320px;
-    height: 320px;
+    width: 300px;
+    height: 450px;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     position: absolute;
     margin: auto;
+    text-align: center;
+}
+.start{
+    margin-top: 310px;
+}
+.container p{
+    font-size: 12px;
+    margin-top: 5px;
 }
 .board-cell{
     width: 15px;

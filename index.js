@@ -1,181 +1,210 @@
 /**
  * Created by MEMEME on 2016/12/13.
  */
-window.onload=function (){
-    init();
-    initBoard();
-    food();
-    snakeUpDataView(snake);
-    start();
-};
-
-function initBoard(){
-    var container = document.querySelector('.container');
-    for( var i = 0; i < 20; i++  ){
-        for( var j = 0; j < 20; j++ ){
-            var oDiv = document.createElement('div');
-            oDiv.id = 'board-cell-'+i+'-'+j;
-            oDiv.className = 'board-cell';
-            container.appendChild(oDiv);
-            oDiv.style.top = i*15+'px';
-            oDiv.style.left = j*15+'px';
+ window.onload = function(){
+    controller.initStatus();
+    board.initBoard();
+    food.createFood();
+    board.upDataViewBoard(snake.snakeModle);
+    controller.start();
+}
+// 棋盘格对象
+var board = {
+    // 初始化棋盘格
+    initBoard : function(){
+        var container = document.querySelector('.container');
+        var button = document.querySelector('.start');
+        for( var i = 0; i < 20; i++  ){
+            for( var j = 0; j < 20; j++ ){
+                var oDiv = document.createElement('div');
+                oDiv.id = 'board-cell-'+i+'-'+j;
+                oDiv.className = 'board-cell';
+                container.insertBefore(oDiv,button);
+                oDiv.style.top = i*15+'px';
+                oDiv.style.left = j*15+'px';
+            }
+        }
+    },
+    // 数据发生变化后更新棋盘格
+    upDataViewBoard : function (snakeArr){
+        var board = document.querySelectorAll('.board-cell');
+        for( var j = 0; j < board.length; j++ ) {
+            board[j].style.background = '#fff';
+        }
+        document.querySelector("#board-cell-"+food.foodx+'-'+food.foody).style.background = 'green';
+        for( var i = 0; i < snakeArr.length; i++) {
+            var snakeDom = document.querySelector('#board-cell-'+snakeArr[i][0]+'-'+snakeArr[i][1]);
+            snakeDom.style.background = '#ccc';
         }
     }
 }
-var snake = null;
-var prevSnakeTail = [];
-var nowDirection = '';
-var timer = null;
-var foodx = 0;
-var foody = 0;
-function init(){
-    snake = [[10,6],[10,5],[10,4],[10,3],[10,2]];
-    foodx = 0;
-    foody = 0;
-    nowDirection = 'right';
-
+// 蛇对象
+var snake = {
+    snakeModle : [],
+    prevSnakeTail : [],
+    nowDirection : '',
+    snakeMove : function (direction) {
+        this.prevSnakeTail=[this.snakeModle[this.snakeModle.length-1][0],this.snakeModle[this.snakeModle.length-1][1]];
+        for (var i = this.snakeModle.length - 1; i > 0; i--) {
+            this.snakeModle[i] = this.snakeModle[i - 1];
+        }
+        this.snakeModle.shift();
+        var snakeHeadX = this.snakeModle[0][0];
+        var snakeHeadY = this.snakeModle[0][1];
+        switch (direction) {
+            case 'left':
+                this.snakeModle.unshift([snakeHeadX, snakeHeadY - 1]);
+                this.nowDirection = 'left';
+                break;
+            case 'right':
+                this.snakeModle.unshift([snakeHeadX, snakeHeadY + 1]);
+                this.nowDirection = 'right';
+                break;
+            case 'top':
+                this.snakeModle.unshift([snakeHeadX - 1, snakeHeadY]);
+                this.nowDirection = 'top';
+                break;
+            case 'down':
+                this.snakeModle.unshift([snakeHeadX + 1, snakeHeadY]);
+                this.nowDirection = 'down';
+                break;
+        }
+        if(controller.notGameOver()) {
+            this.eat();
+            return true;
+        }
+        return false;
+    },
+    eat : function(){
+        if(this.snakeModle[0][0]==food.foodx && this.snakeModle[0][1] == food.foody){
+            this.snakeModle.push([this.prevSnakeTail[0],this.prevSnakeTail[1]]);
+            food.createFood();
+        }
+        board.upDataViewBoard(this.snakeModle);
+    }
 }
-function food(){
-        foodx = Math.floor(Math.random() * 20);
-        foody = Math.floor(Math.random() * 20);
-    for( var i = 0; i < snake.length; i++){
-        if(snake[i][0]==foodx && snake[i][1]==foody){
-            food();
+// 食物对象
+var food = {
+    foodx : 0,
+    foody : 0,
+    createFood : function (){
+        this.foodx = Math.floor(Math.random() * 20);
+        this.foody = Math.floor(Math.random() * 20);
+        for( var i = 0; i < snake.snakeModle.length; i++){
+            if(snake.snakeModle[i][0]==this.foodx && snake.snakeModle[i][1]==this.foody){
+                this.createFood();
+            }
         }
     }
 }
-function snakeUpDataView(snakeArr){
-    var board = document.querySelectorAll('.board-cell');
-    for( var j = 0; j < board.length; j++ ) {
-        board[j].style.background = '#fff';
-    }
-    document.querySelector("#board-cell-"+foodx+'-'+foody).style.background = 'green';
-    for( var i = 0; i < snakeArr.length; i++) {
-        var snakeDom = document.querySelector('#board-cell-'+snakeArr[i][0]+'-'+snakeArr[i][1]);
-        snakeDom.style.background = '#ccc';
-    }
-}
-function start(){
-    document.querySelector('#input1').addEventListener('click',function(){
-        timer = setInterval(function(){console.log(1);snakeMove('right');},200);
-    });
-}
-
-document.addEventListener('keydown',function(e){
-    switch (e.keyCode){
-        case 37:
-            if(nowDirection=='top' || nowDirection == 'down') {
-                clearInterval(timer);
-                if(snakeMove('left')) {
-                    timer = setInterval(function () {
-                        console.log('left');
-                        snakeMove('left')
-                    }, 200);
-                }
-            }
-            break;
-        case 38:
-            if(nowDirection=='left' || nowDirection == 'right') {
-                clearInterval(timer);
-                if(snakeMove('top')) {
-                    timer = setInterval(function () {
-                        console.log('top');
-                        snakeMove('top')
-                    }, 200);
-                }
-            }
-            break;
-        case 39:
-            if(nowDirection=='top' || nowDirection == 'down') {
-                clearInterval(timer);
-                if(snakeMove('right')) {
-                    timer = setInterval(function () {
-                        console.log('right');
-                        snakeMove('right')
-                    }, 200);
-                }
-            }
-            break;
-        case 40:
-            if(nowDirection=='left' || nowDirection == 'right') {
-                clearInterval(timer);
-                if(snakeMove('down')){
-                    timer = setInterval(function () {
-                        console.log('down');
-                        snakeMove('down')
-                    }, 200);
-                }
-            }
-            break;
-        case 32:
-            if(timer){
-                clearInterval(timer);
+// 控制对象
+var controller = {
+    timer : null,
+    // 状态初始化
+    initStatus : function(){
+        snake.snakeModle = [[10,6],[10,5],[10,4],[10,3],[10,2]];
+        snake.nowDirection = 'right';
+        food.foodx = 0;
+        food.foody = 0;
+        this.timer = null;
+    },
+    // 开始
+    start : function(){
+        var that = this;
+        document.querySelector('.start').addEventListener('click',function(){
+            if(!that.timer){
+                that.timer = setInterval(function(){snake.snakeMove(snake.nowDirection);},200);
             }else{
-                setInterval(function(){
-                    snakeMove(nowDirection);
-                },500)
+                clearInterval(that.timer);
+                that.timer = null;
             }
-    }
-});
-
-function snakeMove(direction) {
-    prevSnakeTail=[snake[snake.length-1][0],snake[snake.length-1][1]];
-    for (var i = snake.length - 1; i > 0; i--) {
-        snake[i] = snake[i - 1];
-    }
-    snake.shift();
-    var snakeHeadX = snake[0][0];
-    var snakeHeadY = snake[0][1];
-    switch (direction) {
-        case 'left':
-            snake.unshift([snakeHeadX, snakeHeadY - 1]);
-            nowDirection = 'left';
-            break;
-        case 'right':
-            snake.unshift([snakeHeadX, snakeHeadY + 1]);
-            nowDirection = 'right';
-            break;
-        case 'top':
-            snake.unshift([snakeHeadX - 1, snakeHeadY]);
-            nowDirection = 'top';
-            break;
-        case 'down':
-            snake.unshift([snakeHeadX + 1, snakeHeadY]);
-            nowDirection = 'down';
-            break;
-    }
-    if(notGameOver()) {
-        eat();
+        });
+        document.addEventListener('keydown',function(e){
+            switch (e.keyCode){
+                case 37:
+                    if(snake.nowDirection=='top' || snake.nowDirection == 'down') {
+                        clearInterval(that.timer);
+                        if(snake.snakeMove('left')) {
+                            that.timer = setInterval(function (){
+                                snake.snakeMove('left')
+                            }, 200);
+                        }
+                    }
+                    e.preventDefault();
+                    break;
+                case 38:
+                    if(snake.nowDirection=='left' || snake.nowDirection == 'right') {
+                        clearInterval(that.timer);
+                        if(snake.snakeMove('top')) {
+                            that.timer = setInterval(function () {
+                                snake.snakeMove('top')
+                            }, 200);
+                        }
+                    }
+                    e.preventDefault();
+                    break;
+                case 39:
+                    if(snake.nowDirection=='top' || snake.nowDirection == 'down') {
+                        clearInterval(that.timer);
+                        if(snake.snakeMove('right')) {
+                            that.timer = setInterval(function () {
+                                snake.snakeMove('right')
+                            }, 200);
+                        }
+                    }
+                    e.preventDefault();
+                    break;
+                case 40:
+                    if(snake.nowDirection=='left' || snake.nowDirection == 'right') {
+                        clearInterval(that.timer);
+                        if(snake.snakeMove('down')){
+                            that.timer = setInterval(function () {
+                                snake.snakeMove('down')
+                            }, 200);
+                        }
+                    }
+                    e.preventDefault();
+                    break;
+                case 32:
+                    if(that.timer){
+                        clearInterval(that.timer);
+                        that.timer = null;
+                    }else{
+                        clearInterval(that.timer);
+                        that.timer = setInterval(function(){
+                            snake.snakeMove(snake.nowDirection);
+                        },200)
+                    }
+                    e.preventDefault();
+                    break;
+                default:
+                    break;    
+            }
+        });
+    },
+    // 游戏是否结束
+    notGameOver : function(){
+        if(snake.snakeModle[0][0] < 0 || snake.snakeModle[0][0] > 19 || snake.snakeModle[0][1] < 0 || snake.snakeModle[0][1] > 19){
+            console.log(this.timer);
+            clearInterval(this.timer);
+            alert('GAMEOVER');
+            this.initStatus();
+            food.createFood();
+            board.upDataViewBoard(snake.snakeModle);
+            return false;
+        }else{
+            for(var i = 4; i < snake.snakeModle.length; i++){
+                if(snake.snakeModle[0][0] == snake.snakeModle[i][0] && snake.snakeModle[0][1] == snake.snakeModle[i][1]){
+                    console.log(this.timer);
+                    clearInterval(this.timer);
+                    alert('GAMEOVER');
+                    this.initStatus();
+                    food.createFood();
+                    board.upDataViewBoard(snake.snakeModle);
+                    return false;
+                }
+            }
+        }
         return true;
     }
-    return false;
-}
-function eat() {
-    if(snake[0][0]==foodx && snake[0][1] == foody){
-        snake.push([prevSnakeTail[0],prevSnakeTail[1]]);
-        food();
-    }
-    snakeUpDataView(snake);
-}
-function notGameOver(){
-    if(snake[0][0] < 0 || snake[0][0] > 19 || snake[0][1] < 0 || snake[0][1] > 19){
-        clearInterval(timer);
-        alert('GAMEOVER');
-        init();
-        food();
-        snakeUpDataView(snake);
-        return false;
-    }else{
-        for(var i = 4; i < snake.length; i++){
-            if(snake[0][0] == snake[i][0] && snake[0][1] == snake[i][1]){
-                clearInterval(timer);
-                alert('GAMEOVER');
-                init();
-                food();
-                snakeUpDataView(snake);
-                return false;
-            }
-        }
-    }
-    return true;
 }
